@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib.sh"
 
 # ── Auto-detect repo from git remote ──
@@ -82,7 +82,7 @@ if [ -z "$SYSTEM_FILE" ]; then
     fi
 fi
 
-# ── Load skills ──
+# ── Legacy: shared skills from Docker image (unused with run-agent.sh) ──
 SHARED_SKILLS=""
 if [ -d "/opt/yoyo/skills" ]; then
     SHARED_SKILLS="/opt/yoyo/skills"
