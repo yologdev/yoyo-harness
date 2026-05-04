@@ -8,14 +8,8 @@ Review PR #${PR_NUMBER} and decide: approve, request changes, or flag for human 
 **PR Author:** ${PR_AUTHOR}
 **Branch:** ${PR_BRANCH}
 **Build Status:** ${BUILD_RESULT}
-${PROTECTED_VIOLATIONS:+
-**PROTECTED FILE VIOLATIONS:**
-${PROTECTED_VIOLATIONS}
-}
-${LINKED_ISSUE:+
-**Linked Issue #${LINKED_ISSUE}:**
-${ISSUE_BODY}
-}
+${PROTECTED_SECTION}
+${LINKED_ISSUE_SECTION}
 
 **PR Body:**
 ${PR_BODY}
@@ -56,13 +50,7 @@ approving their own PRs.
 ```
 gh pr review ${PR_NUMBER} --repo ${REPO} --request-changes --body "<specific feedback on what to fix>"
 ```
-${LINKED_ISSUE:+
-Then re-queue the linked issue:
-```
-gh issue edit ${LINKED_ISSUE} --repo ${REPO} --remove-label "in-progress" --add-label "ready"
-gh issue comment ${LINKED_ISSUE} --repo ${REPO} --body "PR #${PR_NUMBER} review requested changes. Re-queued for retry."
-```
-}
+${REQUEUE_SECTION}
 
 **If MERGE CONFLICT detected:**
 First try to resolve:

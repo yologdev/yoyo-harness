@@ -32,9 +32,12 @@ fi
 
 echo "→ Claiming issue #$ISSUE_NUMBER..."
 
-# Atomic claim: swap ready → in-progress
-gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
-    --remove-label "ready" --add-label "in-progress" 2>/dev/null || true
+# Atomic claim: swap ready → in-progress (must succeed to prevent duplicate work)
+if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
+    --remove-label "ready" --add-label "in-progress" 2>&1; then
+    echo "ERROR: Failed to claim issue #$ISSUE_NUMBER (label swap failed). Aborting."
+    exit 1
+fi
 
 # Fetch issue details
 export ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json title --jq '.title' 2>/dev/null || echo "Issue $ISSUE_NUMBER")

@@ -29,8 +29,8 @@ export PR_DIFF=$(gh pr diff "$PR_NUMBER" --repo "$REPO" 2>/dev/null | head -c 15
 # ── Find linked issue ──
 export LINKED_ISSUE=""
 export ISSUE_BODY=""
-if echo "$PR_BODY" | grep -qoP '[Cc]loses?\s+#\d+'; then
-    LINKED_ISSUE=$(echo "$PR_BODY" | grep -oP '[Cc]loses?\s+#\K\d+' | head -1)
+if echo "$PR_BODY" | grep -qiE '[Cc]loses?\s+#[0-9]+'; then
+    LINKED_ISSUE=$(echo "$PR_BODY" | grep -oiE '[Cc]loses?\s+#[0-9]+' | head -1 | grep -oE '[0-9]+')
     ISSUE_BODY=$(gh issue view "$LINKED_ISSUE" --repo "$REPO" --json body --jq '.body' 2>/dev/null | head -c 3000 || true)
     echo "  Linked issue: #$LINKED_ISSUE"
 fi
@@ -61,3 +61,22 @@ for PATH_PATTERN in $PROTECTED_PATHS; do
     MATCH=$(echo "$PROTECTED_IN_DIFF" | grep "^${PATH_PATTERN}" || true)
     [ -n "$MATCH" ] && PROTECTED_VIOLATIONS="${PROTECTED_VIOLATIONS}${MATCH}\n"
 done
+
+# ── Build template sections for PROMPT.md (envsubst can't do conditionals) ──
+export PROTECTED_SECTION=""
+if [ -n "$PROTECTED_VIOLATIONS" ]; then
+    PROTECTED_SECTION="**PROTECTED FILE VIOLATIONS:**
+${PROTECTED_VIOLATIONS}"
+fi
+
+export LINKED_ISSUE_SECTION=""
+export REQUEUE_SECTION=""
+if [ -n "$LINKED_ISSUE" ]; then
+    LINKED_ISSUE_SECTION="**Linked Issue #${LINKED_ISSUE}:**
+${ISSUE_BODY}"
+    REQUEUE_SECTION="Then re-queue the linked issue:
+\`\`\`
+gh issue edit ${LINKED_ISSUE} --repo ${REPO} --remove-label \"in-progress\" --add-label \"ready\"
+gh issue comment ${LINKED_ISSUE} --repo ${REPO} --body \"PR #${PR_NUMBER} review requested changes. Re-queued for retry.\"
+\`\`\`"
+fi

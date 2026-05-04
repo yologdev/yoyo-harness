@@ -92,10 +92,20 @@ fi
 # ── Push branch and create PR ──
 echo "→ Pushing branch and creating PR..."
 git pull --rebase origin main 2>/dev/null || true
-git push -u origin "$BRANCH"
+if ! git push -u origin "$BRANCH" 2>&1; then
+    echo "ERROR: Failed to push branch $BRANCH. Re-queuing issue."
+    gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
+        --remove-label "in-progress" --add-label "ready" 2>/dev/null || true
+    gh issue comment "$ISSUE_NUMBER" --repo "$REPO" \
+        --body "Build agent completed but failed to push branch. Re-queued." 2>/dev/null || true
+    git checkout main
+    git branch -D "$BRANCH" 2>/dev/null || true
+    exit 1
+fi
 
 COMMITS=$(git log --oneline "$SESSION_START_SHA"..HEAD --format="- %s" || true)
 
+PR_EXIT=0
 PR_URL=$(gh pr create --repo "$REPO" \
     --base main \
     --head "$BRANCH" \
@@ -108,7 +118,12 @@ $COMMITS
 ## Verification
 - [ ] \`$BUILD_CMD\` passes
 - [ ] \`$LINT_CMD\` passes
-- [ ] \`$TEST_CMD\` passes" 2>&1 || true)
+- [ ] \`$TEST_CMD\` passes" 2>&1) || PR_EXIT=$?
+
+if [ "$PR_EXIT" -ne 0 ]; then
+    echo "  WARNING: PR creation failed (exit $PR_EXIT): $PR_URL"
+    PR_URL="(PR creation failed — branch pushed to $BRANCH)"
+fi
 
 echo "  PR: $PR_URL"
 

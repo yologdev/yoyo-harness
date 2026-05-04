@@ -20,13 +20,14 @@ parse_toml_value() {
     val=$(python3 -c "
 import sys, re
 content = open(sys.argv[1]).read()
-# Find key = value (handles strings, booleans, numbers)
-m = re.search(r'^${key}\s*=\s*[\"'\''](.*?)[\"'\'']|^${key}\s*=\s*(\S+)', content, re.MULTILINE)
+key = re.escape(sys.argv[2])
+default = sys.argv[3]
+m = re.search(rf'^{key}\s*=\s*[\"'\''](.*?)[\"'\'']|^{key}\s*=\s*(\S+)', content, re.MULTILINE)
 if m:
     print(m.group(1) or m.group(2))
 else:
-    print(sys.argv[2])
-" "$file" "$default" 2>/dev/null || echo "$default")
+    print(default)
+" "$file" "$key" "$default" 2>/dev/null || echo "$default")
     echo "$val"
 }
 
@@ -40,11 +41,12 @@ parse_toml_array() {
     python3 -c "
 import sys, re, ast
 content = open(sys.argv[1]).read()
-m = re.search(r'^${key}\s*=\s*(\[.*?\])', content, re.MULTILINE | re.DOTALL)
+key = re.escape(sys.argv[2])
+m = re.search(rf'^{key}\s*=\s*(\[.*?\])', content, re.MULTILINE | re.DOTALL)
 if m:
     items = ast.literal_eval(m.group(1))
     print(' '.join(str(i) for i in items))
-" "$file" 2>/dev/null || echo ""
+" "$file" "$key" 2>/dev/null || echo ""
 }
 
 # Parse agent enabled status: [agents.NAME] enabled = true/false

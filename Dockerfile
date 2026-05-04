@@ -37,11 +37,14 @@ RUN REPO="yologdev/yoyo-evolve" \
     && chmod +x /usr/local/bin/yoyo \
     && rm -rf /tmp/yoyo*
 
-# Copy harness scripts and identity
+# Copy harness scripts, agents, skills, and identity
 COPY scripts/ /opt/yoyo/scripts/
+COPY agents/ /opt/yoyo/agents/
+COPY skills/ /opt/yoyo/skills/
 COPY identity/ /opt/yoyo/identity/
 
-RUN chmod +x /opt/yoyo/scripts/*.sh
+RUN chmod +x /opt/yoyo/scripts/*.sh \
+    && find /opt/yoyo/agents -name "*.sh" -exec chmod +x {} \;
 
 COPY entrypoint.sh /opt/yoyo/entrypoint.sh
 RUN chmod +x /opt/yoyo/entrypoint.sh

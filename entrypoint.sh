@@ -8,11 +8,4 @@ set -euo pipefail
 AGENT="${1:?Usage: entrypoint.sh <agent> [args...]}"
 shift
 
-SCRIPT="/opt/yoyo/scripts/${AGENT}.sh"
-
-if [ ! -f "$SCRIPT" ]; then
-    echo "ERROR: Unknown agent '$AGENT'. Available: pm, build, review, office-hour, research"
-    exit 1
-fi
-
-exec "$SCRIPT" "$@"
+exec /opt/yoyo/scripts/run-agent.sh "$AGENT" "$@"
