@@ -75,6 +75,15 @@ if [ -z "$SYSTEM_FILE" ]; then
             SYSTEM_FILE=".yoyo/identity/SOUL.md"
             echo "  Identity loaded ($(wc -l < "$SYSTEM_FILE" | tr -d ' ') lines)"
         fi
+
+        # Extract evolved skills into the shared pool
+        if [ -d "$YOYO_EVOLVE_DIR/skills" ]; then
+            EVOLVED_SKILLS="/tmp/yoyo-evolved-skills"
+            rm -rf "$EVOLVED_SKILLS"
+            cp -r "$YOYO_EVOLVE_DIR/skills" "$EVOLVED_SKILLS"
+            SKILL_COUNT=$(find "$EVOLVED_SKILLS" -name "SKILL.md" | wc -l | tr -d ' ')
+            echo "  Evolved skills loaded ($SKILL_COUNT skills from yoyo-evolve)"
+        fi
         rm -rf "$YOYO_EVOLVE_DIR"
     else
         echo "  WARNING: Failed to download identity. Running without system prompt."

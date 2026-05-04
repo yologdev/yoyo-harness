@@ -59,6 +59,12 @@ for SKILL in $SHARED; do
     fi
 done
 
+# Evolved skills from yoyo-evolve (downloaded by setup-agent.sh)
+EVOLVED_SKILLS="/tmp/yoyo-evolved-skills"
+if [ -d "$EVOLVED_SKILLS" ]; then
+    SKILLS_FLAGS="$SKILLS_FLAGS --skills $EVOLVED_SKILLS"
+fi
+
 # Project-local skills are loaded by run_agent() in setup-agent.sh
 
 # ── Build prompt from template ──
