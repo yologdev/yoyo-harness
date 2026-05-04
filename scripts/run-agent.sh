@@ -83,14 +83,17 @@ EXIT_CODE=0
 run_agent "$TIMEOUT" "$PROMPT_FILE" "$AGENT_LOG" "$SKILLS_FLAGS" || EXIT_CODE=$?
 rm -f "$PROMPT_FILE"
 
+export AGENT_EXIT_CODE="$EXIT_CODE"
 if [ "$EXIT_CODE" -eq 124 ]; then
     echo "  WARNING: $AGENT_NAME agent timed out."
 elif [ "$EXIT_CODE" -ne 0 ]; then
     echo "  WARNING: $AGENT_NAME agent exited with code $EXIT_CODE."
 fi
 
-# ── Run post-hook ──
-if [ -f "$AGENT_DIR/hooks/post.sh" ]; then
+# ── Run post-hook (skip on critical agent failure, allow on timeout) ──
+if [ "$EXIT_CODE" -ne 0 ] && [ "$EXIT_CODE" -ne 124 ]; then
+    echo "  Skipping post-hook due to agent failure."
+elif [ -f "$AGENT_DIR/hooks/post.sh" ]; then
     echo "→ Running post-hook..."
     source "$AGENT_DIR/hooks/post.sh"
 fi

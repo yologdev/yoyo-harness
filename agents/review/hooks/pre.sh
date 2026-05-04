@@ -37,21 +37,25 @@ fi
 
 # ── Check if build passes on the branch ──
 echo "→ Checking out PR branch for build verification..."
-git fetch origin "$PR_BRANCH" 2>/dev/null || true
-if ! git checkout "origin/$PR_BRANCH" 2>/dev/null; then
-    echo "  WARNING: Could not checkout PR branch. Skipping build check."
+CHECKOUT_OK=false
+if git fetch origin "$PR_BRANCH" 2>&1; then
+    if git checkout "origin/$PR_BRANCH" 2>&1; then
+        CHECKOUT_OK=true
+    fi
 fi
 
 export BUILD_RESULT="not checked"
-if [ -f package.json ]; then
+if $CHECKOUT_OK && [ -f package.json ]; then
     pnpm install --frozen-lockfile 2>/dev/null || pnpm install 2>/dev/null || true
-    set +o pipefail
-    if eval "$BUILD_CMD" 2>&1 | tail -3 >/dev/null; then
+    if eval "$BUILD_CMD" > /tmp/build-output 2>&1; then
         BUILD_RESULT="passing"
     else
         BUILD_RESULT="failing"
     fi
-    set -o pipefail
+    rm -f /tmp/build-output
+elif ! $CHECKOUT_OK; then
+    echo "  WARNING: Could not checkout PR branch. Build verification skipped."
+    BUILD_RESULT="could not checkout branch"
 fi
 
 # ── Check for protected file modifications ──

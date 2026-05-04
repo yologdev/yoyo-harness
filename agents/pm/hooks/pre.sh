@@ -18,13 +18,12 @@ fi
 echo "→ Checking build state..."
 export BUILD_STATUS="unknown"
 if [ -f package.json ]; then
-    set +o pipefail
-    if eval "$BUILD_CMD" 2>&1 | tail -3 >/dev/null; then
+    if eval "$BUILD_CMD" > /tmp/build-output 2>&1; then
         BUILD_STATUS="passing"
     else
         BUILD_STATUS="failing"
     fi
-    set -o pipefail
+    rm -f /tmp/build-output
 else
     BUILD_STATUS="no build system detected"
 fi

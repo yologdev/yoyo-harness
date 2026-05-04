@@ -54,7 +54,12 @@ for ATTEMPT in $(seq 1 $MAX_FIX_ATTEMPTS); do
         } > "$FIX_PROMPT"
         FIX_LOG=$(mktemp)
         FIX_TIMEOUT=$((TIMEOUT / 4))
-        run_agent "$FIX_TIMEOUT" "$FIX_PROMPT" "$FIX_LOG" || true
+        FIX_EXIT=0
+        run_agent "$FIX_TIMEOUT" "$FIX_PROMPT" "$FIX_LOG" || FIX_EXIT=$?
+        if [ "$FIX_EXIT" -ne 0 ] && [ "$FIX_EXIT" -ne 124 ]; then
+            echo "  ERROR: Fix agent failed (exit $FIX_EXIT). Aborting fix loop."
+            break
+        fi
         rm -f "$FIX_PROMPT" "$FIX_LOG"
     else
         echo "  No package.json — skipping build check."
@@ -91,7 +96,10 @@ fi
 
 # ── Push branch and create PR ──
 echo "→ Pushing branch and creating PR..."
-git pull --rebase origin main 2>/dev/null || true
+if ! git pull --rebase origin main 2>&1; then
+    echo "  WARNING: Rebase onto main failed. Pushing without rebase."
+    git rebase --abort 2>/dev/null || true
+fi
 if ! git push -u origin "$BRANCH" 2>&1; then
     echo "ERROR: Failed to push branch $BRANCH. Re-queuing issue."
     gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \

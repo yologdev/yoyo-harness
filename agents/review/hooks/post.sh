@@ -1,4 +1,6 @@
 #!/bin/bash
 # review post-hook: return to main branch.
 
-git checkout main 2>/dev/null || true
+if ! git checkout main 2>&1; then
+    echo "WARNING: Failed to return to main branch. Next agent run may be on wrong branch."
+fi
