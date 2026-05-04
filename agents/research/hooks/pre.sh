@@ -3,4 +3,6 @@
 # Exports: FOCUS_LINE
 
 export FOCUS_LINE=""
-[ -n "${AGENT_ARGS:-}" ] && FOCUS_LINE="**Priority focus:** $AGENT_ARGS"
+if [ -n "${AGENT_ARGS:-}" ]; then
+    FOCUS_LINE="**Priority focus:** $AGENT_ARGS"
+fi

@@ -4,7 +4,9 @@
 
 export FOCUS="${AGENT_ARGS:-}"
 export FOCUS_LINE=""
-[ -n "$FOCUS" ] && FOCUS_LINE="**Priority focus area:** $FOCUS"
+if [ -n "$FOCUS" ]; then
+    FOCUS_LINE="**Priority focus area:** $FOCUS"
+fi
 
 echo "→ Fetching existing issues..."
 export EXISTING_ISSUES=""
