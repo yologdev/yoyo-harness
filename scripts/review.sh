@@ -50,16 +50,20 @@ fi
 # ── Check if build passes on the branch ──
 echo "→ Checking out PR branch for build verification..."
 git fetch origin "$PR_BRANCH" 2>/dev/null || true
-git checkout "origin/$PR_BRANCH" 2>/dev/null || git checkout "$PR_BRANCH" 2>/dev/null || true
+if ! git checkout "origin/$PR_BRANCH" 2>/dev/null; then
+    echo "  WARNING: Could not checkout PR branch. Skipping build check."
+fi
 
 BUILD_RESULT="not checked"
 if [ -f package.json ]; then
     pnpm install --frozen-lockfile 2>/dev/null || pnpm install 2>/dev/null || true
+    set +o pipefail
     if eval "$BUILD_CMD" 2>&1 | tail -3; then
         BUILD_RESULT="passing"
     else
         BUILD_RESULT="failing"
     fi
+    set -o pipefail
 fi
 
 # ── Check for protected file modifications ──
@@ -70,37 +74,39 @@ for PATH_PATTERN in $PROTECTED_PATHS; do
     [ -n "$MATCH" ] && PROTECTED_VIOLATIONS="${PROTECTED_VIOLATIONS}${MATCH}\n"
 done
 
-# ── Build review prompt ──
+# ── Build review prompt (safe from shell injection) ──
 PROMPT_FILE=$(mktemp)
-cat > "$PROMPT_FILE" <<EOF
-You are yoyo, reviewing a pull request. Today is $DATE $SESSION_TIME.
-
-=== YOUR TASK: CODE REVIEW ===
-
-Review PR #$PR_NUMBER and decide: approve, request changes, or flag for human review.
-
-**PR Title:** $PR_TITLE
-**PR Author:** $PR_AUTHOR
-**Branch:** $PR_BRANCH
-**Build Status:** $BUILD_RESULT
-${PROTECTED_VIOLATIONS:+
-**PROTECTED FILE VIOLATIONS:**
-$(echo -e "$PROTECTED_VIOLATIONS")
-}
-
-${LINKED_ISSUE:+
-**Linked Issue #$LINKED_ISSUE:**
-$ISSUE_BODY
-}
-
-**PR Body:**
-$PR_BODY
-
-**Diff (truncated to 15KB):**
-\`\`\`diff
-$PR_DIFF
-\`\`\`
-
+{
+    echo "You are yoyo, reviewing a pull request. Today is $DATE $SESSION_TIME."
+    echo ""
+    echo "=== YOUR TASK: CODE REVIEW ==="
+    echo ""
+    echo "Review PR #$PR_NUMBER and decide: approve, request changes, or flag for human review."
+    echo ""
+    echo "**PR Title:** $PR_TITLE"
+    echo "**PR Author:** $PR_AUTHOR"
+    echo "**Branch:** $PR_BRANCH"
+    echo "**Build Status:** $BUILD_RESULT"
+    if [ -n "$PROTECTED_VIOLATIONS" ]; then
+        echo ""
+        echo "**PROTECTED FILE VIOLATIONS:**"
+        echo -e "$PROTECTED_VIOLATIONS"
+    fi
+    if [ -n "$LINKED_ISSUE" ]; then
+        echo ""
+        echo "**Linked Issue #$LINKED_ISSUE:**"
+        echo "$ISSUE_BODY"
+    fi
+    echo ""
+    echo "**PR Body:**"
+    echo "$PR_BODY"
+    echo ""
+    echo "**Diff (truncated to 15KB):**"
+    echo '```diff'
+    echo "$PR_DIFF"
+    echo '```'
+    echo ""
+    cat <<CRITERIA
 === REVIEW CRITERIA ===
 
 1. **Acceptance Criteria** — if linked to an issue, does the PR satisfy all
@@ -135,35 +141,46 @@ approving their own PRs.
 \`\`\`
 gh pr review $PR_NUMBER --repo $REPO --request-changes --body "<specific feedback on what to fix>"
 \`\`\`
-${LINKED_ISSUE:+Then re-queue the linked issue so the Build agent retries:
+CRITERIA
+
+    if [ -n "$LINKED_ISSUE" ]; then
+        cat <<REQUEUE
+Then re-queue the linked issue so the Build agent retries:
 \`\`\`
 gh issue edit $LINKED_ISSUE --repo $REPO --remove-label "in-progress" --add-label "ready"
 gh issue comment $LINKED_ISSUE --repo $REPO --body "PR #$PR_NUMBER review requested changes. Re-queued for retry."
-\`\`\`}
+\`\`\`
+REQUEUE
+    fi
+
+    cat <<'MERGE_SECTION'
 
 **If MERGE CONFLICT detected:**
 First try to resolve:
-\`\`\`
-git checkout $PR_BRANCH
+```
 git pull --rebase origin main
 git push --force-with-lease
-\`\`\`
-If rebase fails, comment on the PR:
-\`\`\`
-gh pr comment $PR_NUMBER --repo $REPO --body "Merge conflict detected. Rebase failed — re-queuing the linked issue."
-\`\`\`
+```
+If rebase fails, comment on the PR explaining the conflict.
 
 After approving, if the PR has no merge conflicts and build passes:
-\`\`\`
-gh pr merge $PR_NUMBER --repo $REPO --squash --auto
-\`\`\`
+```
+gh pr merge <PR_NUMBER> --repo <REPO> --squash --auto
+```
+MERGE_SECTION
 
+    # Append the actual PR number for the merge command
+    echo ""
+    echo "For this PR, the merge command is: \`gh pr merge $PR_NUMBER --repo $REPO --squash --auto\`"
+    echo ""
+    cat <<'RULES'
 Rules:
 - Be specific in feedback. Point to exact lines/files.
 - Don't nitpick style if it matches existing patterns.
 - If the PR modifies protected files, always request changes — no exceptions.
 - Only approve if you're confident the change is correct and complete.
-EOF
+RULES
+} > "$PROMPT_FILE"
 
 # ── Run review agent ──
 echo "→ Running review agent..."

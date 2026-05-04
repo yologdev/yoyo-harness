@@ -46,22 +46,23 @@ if [ "$TRIAGE_COUNT" -eq 0 ] 2>/dev/null; then
     exit 0
 fi
 
-# ── Build prompt ──
+# ── Build prompt (safe from shell injection) ──
 PROMPT_FILE=$(mktemp)
-cat > "$PROMPT_FILE" <<EOF
-You are yoyo, running your office hour session. Today is $DATE $SESSION_TIME.
-
-=== YOUR TASK: TRIAGE & GROOMING ===
-
-You are the Office Hour agent. Your job: review new issues labeled "triage",
-groom them to "ready" (or reject/block), and ensure the backlog is prioritized.
-
-=== TRIAGE ISSUES (need your review) ===
-${TRIAGE_ISSUES:-No triage issues.}
-
-=== CURRENT READY BACKLOG ===
-${READY_ISSUES:-No ready issues.}
-
+{
+    echo "You are yoyo, running your office hour session. Today is $DATE $SESSION_TIME."
+    echo ""
+    echo "=== YOUR TASK: TRIAGE & GROOMING ==="
+    echo ""
+    echo "You are the Office Hour agent. Your job: review new issues labeled \"triage\","
+    echo "groom them to \"ready\" (or reject/block), and ensure the backlog is prioritized."
+    echo ""
+    echo "=== TRIAGE ISSUES (need your review) ==="
+    echo "${TRIAGE_ISSUES:-No triage issues.}"
+    echo ""
+    echo "=== CURRENT READY BACKLOG ==="
+    echo "${READY_ISSUES:-No ready issues.}"
+    echo ""
+    cat <<INSTRUCTIONS
 Steps:
 
 1. **Read project context** — README.md, YOYO.md, any roadmap docs.
@@ -100,7 +101,8 @@ Rules:
 - Issues from humans (agent-input) get +1 priority bump unless clearly out of scope
 - Do NOT implement anything. Grooming is your only job.
 - Do NOT create new issues. That's the PM agent's job.
-EOF
+INSTRUCTIONS
+} > "$PROMPT_FILE"
 
 # ── Run Office Hour agent ──
 echo "→ Running Office Hour agent..."

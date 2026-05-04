@@ -68,18 +68,24 @@ SESSION_START_SHA=$(git rev-parse HEAD)
 SAFE_BODY=$(echo "$ISSUE_BODY" | sanitize_issue_content)
 
 # ── Build implementation prompt ──
+# Write untrusted content to temp files, then assemble prompt safely
 PROMPT_FILE=$(mktemp)
-cat > "$PROMPT_FILE" <<EOF
-You are yoyo, a coding agent implementing a task. Today is $DATE $SESSION_TIME.
-
-=== YOUR TASK: IMPLEMENT ISSUE #$ISSUE_NUMBER ===
-
-**Title:** $ISSUE_TITLE
-**Labels:** $ISSUE_LABELS
-
-**Issue Body:**
-$SAFE_BODY
-
+{
+    cat <<'STATIC_HEADER'
+You are yoyo, a coding agent implementing a task.
+STATIC_HEADER
+    echo ""
+    echo "Today is $DATE $SESSION_TIME."
+    echo ""
+    echo "=== YOUR TASK: IMPLEMENT ISSUE #$ISSUE_NUMBER ==="
+    echo ""
+    echo "**Title:** $(cat <<< "$ISSUE_TITLE")"
+    echo "**Labels:** $ISSUE_LABELS"
+    echo ""
+    echo "**Issue Body:**"
+    echo "$SAFE_BODY"
+    echo ""
+    cat <<INSTRUCTIONS
 === INSTRUCTIONS ===
 
 1. **Read project context** — README.md, YOYO.md, and any files mentioned in the issue.
@@ -110,9 +116,10 @@ Rules:
 - If you can't complete the task, commit what you have and note what's missing.
 - Do NOT push. Do NOT create a PR. The build script handles that.
 - Do NOT modify .yoyo/journal.md or .yoyo/learnings.md during implementation.
-EOF
+INSTRUCTIONS
+} > "$PROMPT_FILE"
 
-# ── Run build agent with fix loop ──
+# ── Run build agent ──
 echo "→ Running build agent..."
 AGENT_LOG=$(mktemp)
 BUILD_EXIT=0
@@ -125,13 +132,17 @@ fi
 rm -f "$AGENT_LOG"
 
 # ── Build-fix loop ──
+# Disable pipefail for verification commands (we check PIPESTATUS manually)
 echo "→ Verifying build..."
 for ATTEMPT in $(seq 1 $MAX_FIX_ATTEMPTS); do
     if [ -f package.json ]; then
         BUILD_OK=true
+
+        set +o pipefail
         eval "$BUILD_CMD" 2>&1 | tail -5; [ "${PIPESTATUS[0]}" -eq 0 ] || BUILD_OK=false
         eval "$LINT_CMD" 2>&1 | tail -5; [ "${PIPESTATUS[0]}" -eq 0 ] || BUILD_OK=false
         eval "$TEST_CMD" 2>&1 | tail -5; [ "${PIPESTATUS[0]}" -eq 0 ] || BUILD_OK=false
+        set -o pipefail
 
         if $BUILD_OK; then
             echo "  Build: PASS (attempt $ATTEMPT)"
@@ -152,23 +163,25 @@ for ATTEMPT in $(seq 1 $MAX_FIX_ATTEMPTS); do
 
         echo "  Build: FAIL (attempt $ATTEMPT/$MAX_FIX_ATTEMPTS). Running fix agent..."
         FIX_PROMPT=$(mktemp)
+        set +o pipefail
         FIX_ERRORS=$(eval "$BUILD_CMD" 2>&1 | tail -30; eval "$LINT_CMD" 2>&1 | tail -20; eval "$TEST_CMD" 2>&1 | tail -30)
-        cat > "$FIX_PROMPT" <<FIXEOF
-You are yoyo, fixing build/lint/test failures. Today is $DATE.
-
-The build is failing. Fix the errors below. Do NOT add new features — only fix what's broken.
-
-=== ERRORS ===
-$FIX_ERRORS
-
-Steps:
-1. Read the failing files
-2. Fix the specific errors
-3. Run \`$BUILD_CMD && $LINT_CMD && $TEST_CMD\` to verify
-4. Commit: \`git add <files> && git commit -m "yoyo: fix build errors"\`
-
-Do NOT modify protected files: $PROTECTED_PATHS
-FIXEOF
+        set -o pipefail
+        {
+            echo "You are yoyo, fixing build/lint/test failures. Today is $DATE."
+            echo ""
+            echo "The build is failing. Fix the errors below. Do NOT add new features — only fix what's broken."
+            echo ""
+            echo "=== ERRORS ==="
+            echo "$FIX_ERRORS"
+            echo ""
+            echo "Steps:"
+            echo "1. Read the failing files"
+            echo "2. Fix the specific errors"
+            echo "3. Run \`$BUILD_CMD && $LINT_CMD && $TEST_CMD\` to verify"
+            echo "4. Commit: \`git add <files> && git commit -m \"yoyo: fix build errors\"\`"
+            echo ""
+            echo "Do NOT modify protected files: $PROTECTED_PATHS"
+        } > "$FIX_PROMPT"
         FIX_LOG=$(mktemp)
         FIX_TIMEOUT=$((TIMEOUT / 4))
         run_agent "$FIX_TIMEOUT" "$FIX_PROMPT" "$FIX_LOG" || true
@@ -217,8 +230,7 @@ PR_URL=$(gh pr create --repo "$REPO" \
     --base main \
     --head "$BRANCH" \
     --title "yoyo: $ISSUE_TITLE" \
-    --body "$(cat <<PREOF
-Closes #$ISSUE_NUMBER
+    --body "Closes #$ISSUE_NUMBER
 
 ## Changes
 $COMMITS
@@ -226,9 +238,7 @@ $COMMITS
 ## Verification
 - [ ] \`$BUILD_CMD\` passes
 - [ ] \`$LINT_CMD\` passes
-- [ ] \`$TEST_CMD\` passes
-PREOF
-)" 2>&1 || true)
+- [ ] \`$TEST_CMD\` passes" 2>&1 || true)
 
 echo "  PR: $PR_URL"
 
@@ -238,13 +248,13 @@ git checkout main
 git pull --rebase origin main 2>/dev/null || true
 
 if [ -f .yoyo/journal.md ]; then
-    cat >> .yoyo/journal.md <<JEOF
-
-## $DATE $SESSION_TIME (build)
-Implemented issue #$ISSUE_NUMBER: $ISSUE_TITLE
-Branch: $BRANCH | PR: $PR_URL
-Commits: $COMMITS
-JEOF
+    {
+        echo ""
+        echo "## $DATE $SESSION_TIME (build)"
+        echo "Implemented issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+        echo "Branch: $BRANCH | PR: $PR_URL"
+        echo "Commits: $COMMITS"
+    } >> .yoyo/journal.md
     commit_and_push_journal "yoyo: build session ($DATE) — issue #$ISSUE_NUMBER"
 fi
 

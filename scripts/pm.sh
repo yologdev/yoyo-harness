@@ -2,12 +2,13 @@
 # pm.sh — PM agent: assess codebase, file implementation issues.
 # Runs daily. Reads project docs, identifies gaps, files structured issues.
 #
-# Usage: ./pm.sh
+# Usage: ./pm.sh [focus_topic]
 # Env: REPO, GH_TOKEN, ANTHROPIC_API_KEY
 
 source "$(dirname "$0")/setup-agent.sh"
 
 TIMEOUT="${TIMEOUT:-900}"  # 15 min
+FOCUS="${1:-}"
 
 # ── Check if agent is enabled ──
 ENABLED=$(parse_agent_enabled ".yoyo/yoyo.toml" "pm" "true")
@@ -30,25 +31,32 @@ fi
 echo "→ Checking build state..."
 BUILD_STATUS="unknown"
 if [ -f package.json ]; then
+    set +o pipefail
     if eval "$BUILD_CMD" 2>&1 | tail -3; then
         BUILD_STATUS="passing"
     else
         BUILD_STATUS="failing"
     fi
+    set -o pipefail
 else
     BUILD_STATUS="no build system detected"
 fi
 
-# ── Build prompt ──
+# ── Build prompt (safe from shell injection) ──
 PROMPT_FILE=$(mktemp)
-cat > "$PROMPT_FILE" <<EOF
-You are yoyo, running your daily PM session. Today is $DATE $SESSION_TIME.
-
-=== YOUR TASK: PROJECT MANAGEMENT ===
-
-You are the PM agent. Your job: assess the current state of the project, identify
-what to build next, and file implementation issues on GitHub.
-
+{
+    echo "You are yoyo, running your daily PM session. Today is $DATE $SESSION_TIME."
+    echo ""
+    echo "=== YOUR TASK: PROJECT MANAGEMENT ==="
+    echo ""
+    echo "You are the PM agent. Your job: assess the current state of the project, identify"
+    echo "what to build next, and file implementation issues on GitHub."
+    if [ -n "$FOCUS" ]; then
+        echo ""
+        echo "**Priority focus area:** $FOCUS"
+    fi
+    echo ""
+    cat <<'STATIC'
 Steps:
 
 1. **Read project context:**
@@ -61,12 +69,14 @@ Steps:
    - .yoyo/journal.md (last 3 entries) if it exists
    - git log --oneline -15 (recent commits)
    - .yoyo/learnings.md for project-specific insights (if exists)
-
-4. **Check build status:** Build is currently: $BUILD_STATUS
-
-5. **Review existing issues** (do NOT duplicate these):
-${EXISTING_ISSUES:-No existing issues.}
-
+STATIC
+    echo ""
+    echo "4. **Check build status:** Build is currently: $BUILD_STATUS"
+    echo ""
+    echo "5. **Review existing issues** (do NOT duplicate these):"
+    echo "${EXISTING_ISSUES:-No existing issues.}"
+    echo ""
+    cat <<DYNAMIC
 6. **Identify gaps** between the project roadmap and the current codebase.
    Focus on the CURRENT phase — don't skip ahead.
 
@@ -115,7 +125,8 @@ Rules:
 - Do NOT implement anything. Filing issues is your only job.
 - Do NOT duplicate existing open issues
 - If build is failing, file a P0 bug issue for the fix
-EOF
+DYNAMIC
+} > "$PROMPT_FILE"
 
 # ── Run PM agent ──
 echo "→ Running PM agent..."
