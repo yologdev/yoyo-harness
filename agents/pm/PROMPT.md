@@ -58,9 +58,19 @@ gh issue create --repo ${REPO} \
 
 Where <type> is one of: feature, bug, refactor, docs.
 
-8. **Close stale issues** — if any open agent-self issues are now superseded.
+8. **Reassess blocked issues** — check if blockers are resolved:
+${BLOCKED_ISSUES}
 
-9. **Append a PM note** to .yoyo/journal.md:
+   For each blocked issue, read its body for dependencies. If the dependency
+   is closed or the blocker no longer applies, unblock it:
+   ```
+   gh issue edit <N> --repo ${REPO} --remove-label "blocked" --add-label "triage"
+   gh issue comment <N> --repo ${REPO} --body "Blocker resolved. Moved to triage."
+   ```
+
+9. **Close stale issues** — if any open agent-self issues are now superseded.
+
+10. **Append a PM note** to .yoyo/journal.md:
    ```
    ## ${DATE} ${SESSION_TIME} (pm)
    [What you assessed, what issues you filed, what's next]

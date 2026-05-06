@@ -1,6 +1,6 @@
 #!/bin/bash
-# pm pre-hook: fetch existing issues, check build state.
-# Exports: EXISTING_ISSUES, BUILD_STATUS, FOCUS
+# pm pre-hook: fetch existing issues, blocked issues, check build state.
+# Exports: EXISTING_ISSUES, BLOCKED_ISSUES, BUILD_STATUS, FOCUS
 
 export FOCUS="${AGENT_ARGS:-}"
 export FOCUS_LINE=""
@@ -15,6 +15,17 @@ if command -v gh &>/dev/null; then
         --json number,title,labels \
         --jq '.[] | "#\(.number) [\(.labels | map(.name) | join(","))] \(.title)"' 2>/dev/null || true)
     echo "  $(echo "$EXISTING_ISSUES" | grep -c '^#' 2>/dev/null || echo 0) open issues."
+fi
+
+echo "→ Fetching blocked issues..."
+export BLOCKED_ISSUES=""
+if command -v gh &>/dev/null; then
+    BLOCKED_ISSUES=$(gh issue list --repo "$REPO" --state open \
+        --label "blocked" --limit 20 \
+        --json number,title,body \
+        --jq '.[] | "### #\(.number) \(.title)\n\(.body | .[0:500])\n---"' 2>/dev/null || true)
+    BLOCKED_COUNT=$(echo "$BLOCKED_ISSUES" | grep -c '^### #' 2>/dev/null || echo 0)
+    echo "  $BLOCKED_COUNT blocked issues to reassess."
 fi
 
 echo "→ Checking build state..."
