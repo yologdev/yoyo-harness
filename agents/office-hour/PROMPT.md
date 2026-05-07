@@ -31,9 +31,13 @@ ${READY_ISSUES}
 
 3. Comment on the issue with your verdict and reasoning, then act:
 
-APPROVE:
+APPROVE (small — ≤3 files, straightforward):
   gh issue comment <N> --repo ${REPO} --body "<verdict + diagnostic reasoning>"
   gh issue edit <N> --repo ${REPO} --remove-label "triage" --add-label "ready" --add-label "<priority>"
+
+APPROVE (complex — >3 files, cross-cutting, risky, or needs design):
+  gh issue comment <N> --repo ${REPO} --body "<verdict + why this needs architecture first>"
+  gh issue edit <N> --repo ${REPO} --remove-label "triage" --add-label "needs-architecture" --add-label "<priority>"
 
 REJECT:
   gh issue close <N> --repo ${REPO} --comment "<verdict + what would change your mind>"
