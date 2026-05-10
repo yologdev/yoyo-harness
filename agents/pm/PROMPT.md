@@ -58,15 +58,22 @@ gh issue create --repo ${REPO} \
 
 Where <type> is one of: feature, bug, refactor, docs.
 
-8. **Reassess blocked issues** — check if blockers are resolved:
+8. **Reassess blocked issues** — actively check if blockers are resolved:
 ${BLOCKED_ISSUES}
 
-   For each blocked issue, read its body for dependencies. If the dependency
-   is closed or the blocker no longer applies, unblock it:
+   For each blocked issue:
+   a. Read its body for dependency references (e.g. "Requires issue #16",
+      "Depends on #X", "After #Y is done")
+   b. For each referenced issue, run `gh issue view <N> --repo ${REPO} --json state`
+      to check if it's CLOSED
+   c. If ALL dependencies are closed, unblock it:
    ```
    gh issue edit <N> --repo ${REPO} --remove-label "blocked" --add-label "triage"
-   gh issue comment <N> --repo ${REPO} --body "Blocker resolved. Moved to triage."
+   gh issue comment <N> --repo ${REPO} \
+     --body "Unblocking: dependency #X is closed. Ready for triage."
    ```
+   d. Do NOT assume a blocker still applies just because the issue body
+      mentions human action — verify the actual state of referenced issues
 
 9. **Close stale issues** — if any open agent-self issues are now superseded.
 
