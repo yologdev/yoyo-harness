@@ -100,7 +100,7 @@ if ! git pull --rebase origin main 2>&1; then
     echo "  WARNING: Rebase onto main failed. Pushing without rebase."
     git rebase --abort 2>/dev/null || true
 fi
-if ! git push -u origin "$BRANCH" 2>&1; then
+if ! git push --force-with-lease -u origin "$BRANCH" 2>&1; then
     echo "ERROR: Failed to push branch $BRANCH. Re-queuing issue."
     gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
         --remove-label "in-progress" --add-label "ready" 2>/dev/null || true
