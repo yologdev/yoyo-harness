@@ -56,7 +56,18 @@ enabled = false
 
 [agents.research]
 enabled = false
+
+# Optional: enable bounded Office Hour-led decision discussions.
+# Defaults are false and 3, so the basic PM + Build setup is unchanged.
+[collaboration]
+decision_discussions = false
+max_rounds = 3
 ```
+
+When decision discussions are enabled, Office Hour may ask enabled specialist
+agents for judgment in issue comments using `Ask-PM:`, `Ask-Architect:`, and
+`Ask-Research:` markers. Those agents reply with `Decision-Input:` comments, and
+Office Hour makes the final readiness verdict after at most `max_rounds`.
 
 ## License
 

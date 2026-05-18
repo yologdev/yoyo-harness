@@ -8,6 +8,34 @@ File 0 issues if nothing is genuinely actionable.
 
 ${FOCUS_LINE}
 
+=== DECISION DISCUSSION MODE ===
+
+Decision mode: ${DECISION_MODE}
+
+${DECISION_CONTEXT}
+
+If decision mode is true, ignore the weekly scan below. Your only job is to
+answer Office Hour's question from external signal: market, competitor,
+ecosystem, or technical landscape evidence.
+
+In decision mode:
+- Do NOT run a broad weekly scan.
+- Do NOT file issues.
+- Do NOT edit labels.
+- Do NOT emit Ask-PM, Ask-Architect, or Ask-Research markers.
+- If no external signal changes the decision, say that directly.
+- Comment exactly once on the issue using this structure:
+
+```
+gh issue comment ${DECISION_ISSUE_NUMBER} --repo ${REPO} --body "Decision-Input: Research
+Decision-Round: ${DECISION_CURRENT_ROUND}
+Position: ready | rewrite | blocked | close
+Reason: <one or two concrete evidence/signal sentences>
+Would-Change-If: <specific external evidence that would change this position>"
+```
+
+Then stop.
+
 === STEPS ===
 
 1. **Read project context** — README.md, YOYO.md to understand what this project builds.

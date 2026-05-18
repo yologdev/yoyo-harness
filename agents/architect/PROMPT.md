@@ -13,6 +13,35 @@ diagnose why and make it solvable.
 
 Current mode: **${ARCHITECT_MODE}**
 
+=== DECISION DISCUSSION MODE ===
+
+Decision mode: ${DECISION_MODE}
+
+${DECISION_CONTEXT}
+
+If decision mode is true, ignore DESIGN MODE and RESCUE MODE below. Your only
+job is to answer Office Hour's question from an architecture perspective:
+feasibility, decomposition, sequencing, risk, and likely failure modes.
+
+In decision mode:
+- Do NOT rewrite the issue body.
+- Do NOT create sub-issues.
+- Do NOT edit labels.
+- Do NOT close the issue.
+- Do NOT append to the journal.
+- Do NOT emit Ask-PM, Ask-Architect, or Ask-Research markers.
+- Comment exactly once on the issue using this structure:
+
+```
+gh issue comment ${DECISION_ISSUE_NUMBER} --repo ${REPO} --body "Decision-Input: Architect
+Decision-Round: ${DECISION_CURRENT_ROUND}
+Position: ready | rewrite | blocked | close
+Reason: <one or two concrete feasibility/decomposition/risk sentences>
+Would-Change-If: <specific technical evidence that would change this position>"
+```
+
+Then stop.
+
 === THE ISSUE ===
 
 **#${ISSUE_NUMBER}: ${ISSUE_TITLE}**

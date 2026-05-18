@@ -3,6 +3,19 @@
 # Exports: ISSUE_NUMBER, ISSUE_TITLE, ISSUE_BODY, ARCHITECT_MODE,
 #          FAILURE_SECTION, FAILURE_HISTORY, FAILED_DIFFS
 
+parse_decision_args "${AGENT_ARGS:-}"
+if [ "$DECISION_MODE" = "true" ]; then
+    fetch_decision_context "$DECISION_ISSUE_NUMBER" "Architect"
+    export ISSUE_NUMBER="$DECISION_ISSUE_NUMBER"
+    export ISSUE_TITLE="$DECISION_ISSUE_TITLE"
+    export ISSUE_BODY="$DECISION_ISSUE_BODY"
+    export ARCHITECT_MODE="DECISION"
+    export FAILURE_HISTORY=""
+    export FAILED_DIFFS=""
+    export FAILURE_SECTION=""
+    return 0
+fi
+
 export ISSUE_NUMBER="${AGENT_ARGS:-}"
 export ARCHITECT_MODE=""
 
