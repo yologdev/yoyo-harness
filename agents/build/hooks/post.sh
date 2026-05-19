@@ -70,13 +70,58 @@ done
 # ── Check for protected file modifications ──
 PROTECTED=$(check_protected_files "$SESSION_START_SHA")
 if [ -n "$PROTECTED" ]; then
-    echo "  WARNING: Protected files modified. Reverting."
+    echo "  WARNING: Protected files modified. Reverting and creating human-action blocker."
     echo "  $PROTECTED"
     git reset --hard "$SESSION_START_SHA"
+    HUMAN_TITLE="Human action: handle protected files for #$ISSUE_NUMBER"
+    HUMAN_BODY="Build agent stopped because issue #$ISSUE_NUMBER requires changes to protected files.
+
+Protected files:
+\`\`\`
+$PROTECTED
+\`\`\`
+
+Why this needs a human:
+- Protected paths are intentionally blocked from build-agent edits.
+- A human should either make the protected-file change directly, rewrite #$ISSUE_NUMBER so it avoids protected paths, or explicitly adjust the protected-path policy.
+
+Completion signal: close this issue when the protected-file decision or change is complete."
+    HUMAN_ISSUE=$(gh issue list --repo "$REPO" --state open \
+        --search "\"$HUMAN_TITLE\" in:title" \
+        --json number --jq '.[0].number' 2>/dev/null || true)
+    if [ -z "$HUMAN_ISSUE" ] || [ "$HUMAN_ISSUE" = "null" ]; then
+        HUMAN_CREATE=$(gh issue create --repo "$REPO" \
+            --title "$HUMAN_TITLE" \
+            --body "$HUMAN_BODY" \
+            --label "human-action" 2>&1) || HUMAN_CREATE=""
+        if [ -z "$HUMAN_CREATE" ]; then
+            HUMAN_CREATE=$(gh issue create --repo "$REPO" \
+                --title "$HUMAN_TITLE" \
+                --body "$HUMAN_BODY" 2>&1) || HUMAN_CREATE=""
+        fi
+        HUMAN_ISSUE=$(printf "%s" "$HUMAN_CREATE" | sed -nE 's#.*/issues/([0-9]+).*#\1#p' | head -1)
+    fi
+
+    BLOCKER_LINE=""
+    if [ -n "$HUMAN_ISSUE" ] && [ "$HUMAN_ISSUE" != "null" ]; then
+        BLOCKER_LINE="Blocked-By: #$HUMAN_ISSUE"
+    else
+        BLOCKER_LINE="Blocked-By: human protected-file decision"
+    fi
+
     gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
-        --remove-label "in-progress" --add-label "ready" 2>/dev/null || true
+        --remove-label "in-progress" --remove-label "ready" --add-label "blocked" 2>/dev/null || true
     gh issue comment "$ISSUE_NUMBER" --repo "$REPO" \
-        --body "Implementation attempted to modify protected files. Re-queued. Protected: $PROTECTED" 2>/dev/null || true
+        --body "Build stopped because this issue requires protected-file changes.
+
+$BLOCKER_LINE
+Blocker-Type: human
+Unblock-To: ready
+
+Protected files:
+\`\`\`
+$PROTECTED
+\`\`\`" 2>/dev/null || true
     git checkout main
     git branch -D "$BRANCH" 2>/dev/null || true
     exit 1

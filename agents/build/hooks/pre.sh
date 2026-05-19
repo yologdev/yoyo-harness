@@ -33,14 +33,14 @@ fi
 # ── Check retry count (stop spinning on hard issues) ──
 MAX_ISSUE_RETRIES=3
 RETRY_COUNT=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments \
-    --jq '[.comments[] | select(.body | test("Re-queued as ready"))] | length' 2>/dev/null || echo 0)
+    --jq '[.comments[] | select(.body | test("Re-queued|Build failed|Implementation attempted|made no changes|failed to push"; "i"))] | length' 2>/dev/null || echo 0)
 
 if [ "$RETRY_COUNT" -ge "$MAX_ISSUE_RETRIES" ]; then
     echo "  Issue #$ISSUE_NUMBER has failed $RETRY_COUNT times. Escalating."
     gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
         --remove-label "ready" --add-label "blocked" --add-label "agent-help-wanted" 2>&1 || true
     gh issue comment "$ISSUE_NUMBER" --repo "$REPO" \
-        --body "Build agent failed $RETRY_COUNT times on this issue. Marking as blocked — may need to be split into smaller issues or needs human guidance." 2>&1 || true
+        --body "Build agent failed or re-queued this issue $RETRY_COUNT times. Marking as blocked — may need to be split, rewritten, or handled by a human-action issue." 2>&1 || true
     exit 0
 fi
 

@@ -75,7 +75,7 @@ if [ "$ARCHITECT_MODE" = "RESCUE" ]; then
         --jq '[.comments[] | select(.body | test("failed|Re-queued|rejected|no changes")) | .body] | join("\n---\n")' 2>/dev/null | head -c 5000 || echo "")
 
     FAILURE_COUNT=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments \
-        --jq '[.comments[] | select(.body | test("Re-queued as ready"))] | length' 2>/dev/null || echo 0)
+        --jq '[.comments[] | select(.body | test("Re-queued|Build failed|Implementation attempted|made no changes|failed to push"; "i"))] | length' 2>/dev/null || echo 0)
     echo "  Failed attempts: $FAILURE_COUNT"
 
     # Find failed PRs
