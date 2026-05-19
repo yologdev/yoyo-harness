@@ -59,36 +59,44 @@ elif [ -f "/opt/yoyo/identity/SOUL.md" ]; then
     SYSTEM_FILE="/opt/yoyo/identity/SOUL.md"
 fi
 
-# If no pre-built identity, try downloading from yoyo-evolve
-if [ -z "$SYSTEM_FILE" ]; then
-    echo "→ Downloading yoyo identity from yoyo-evolve..."
-    YOYO_EVOLVE_DIR="/tmp/yoyo-evolve"
-    mkdir -p "$YOYO_EVOLVE_DIR" ".yoyo/identity"
+# Always try downloading yoyo-evolve so evolved skills are available even when
+# identity is already baked into the harness image.
+YOYO_EVOLVE_DIR="/tmp/yoyo-evolve"
+rm -rf "$YOYO_EVOLVE_DIR" /tmp/yoyo-evolve.tar.gz
+mkdir -p "$YOYO_EVOLVE_DIR"
 
-    if gh api "repos/yologdev/yoyo-evolve/tarball/main" > /tmp/yoyo-evolve.tar.gz 2>/dev/null; then
-        tar xzf /tmp/yoyo-evolve.tar.gz -C "$YOYO_EVOLVE_DIR" --strip-components=1
-        rm -f /tmp/yoyo-evolve.tar.gz
+echo "→ Downloading yoyo-evolve context..."
+if gh api "repos/yologdev/yoyo-evolve/tarball/main" > /tmp/yoyo-evolve.tar.gz 2>/dev/null; then
+    tar xzf /tmp/yoyo-evolve.tar.gz -C "$YOYO_EVOLVE_DIR" --strip-components=1
+    rm -f /tmp/yoyo-evolve.tar.gz
 
+    # If no pre-built identity exists, generate one from yoyo-evolve.
+    if [ -z "$SYSTEM_FILE" ]; then
+        mkdir -p ".yoyo/identity"
         if [ -f "$YOYO_EVOLVE_DIR/scripts/yoyo_context.sh" ]; then
             YOYO_REPO="$YOYO_EVOLVE_DIR" source "$YOYO_EVOLVE_DIR/scripts/yoyo_context.sh"
             echo "$YOYO_CONTEXT" > ".yoyo/identity/SOUL.md"
             SYSTEM_FILE=".yoyo/identity/SOUL.md"
             echo "  Identity loaded ($(wc -l < "$SYSTEM_FILE" | tr -d ' ') lines)"
         fi
-
-        # Extract evolved skills into the shared pool
-        if [ -d "$YOYO_EVOLVE_DIR/skills" ]; then
-            EVOLVED_SKILLS="/tmp/yoyo-evolved-skills"
-            rm -rf "$EVOLVED_SKILLS"
-            cp -r "$YOYO_EVOLVE_DIR/skills" "$EVOLVED_SKILLS"
-            SKILL_COUNT=$(find "$EVOLVED_SKILLS" -name "SKILL.md" | wc -l | tr -d ' ')
-            echo "  Evolved skills loaded ($SKILL_COUNT skills from yoyo-evolve)"
-        fi
-        rm -rf "$YOYO_EVOLVE_DIR"
-    else
-        echo "  WARNING: Failed to download identity. Running without system prompt."
-        rm -f /tmp/yoyo-evolve.tar.gz
     fi
+
+    # Extract evolved skills into the shared pool.
+    if [ -d "$YOYO_EVOLVE_DIR/skills" ]; then
+        EVOLVED_SKILLS="/tmp/yoyo-evolved-skills"
+        rm -rf "$EVOLVED_SKILLS"
+        cp -r "$YOYO_EVOLVE_DIR/skills" "$EVOLVED_SKILLS"
+        SKILL_COUNT=$(find "$EVOLVED_SKILLS" -name "SKILL.md" | wc -l | tr -d ' ')
+        echo "  Evolved skills loaded ($SKILL_COUNT skills from yoyo-evolve)"
+    fi
+    rm -rf "$YOYO_EVOLVE_DIR"
+else
+    if [ -z "$SYSTEM_FILE" ]; then
+        echo "  WARNING: Failed to download identity. Running without system prompt."
+    else
+        echo "  WARNING: Failed to download evolved skills."
+    fi
+    rm -rf "$YOYO_EVOLVE_DIR" /tmp/yoyo-evolve.tar.gz
 fi
 
 # ── Legacy: shared skills from Docker image (unused with run-agent.sh) ──
