@@ -96,6 +96,16 @@ Ask-PM: <only if pm is enabled and product judgment is needed>
 Ask-Architect: <only if architect is enabled and architecture judgment is needed>
 Ask-Research: <only if research is enabled and external signal is needed>"
 
+4. **Append an Office Hour note** to .yoyo/journal.md:
+   ```
+   ## ${DATE} ${SESSION_TIME} (office-hour)
+   [What you triaged, what changed state, and what is next]
+   ```
+
+   Use the literal `${DATE} ${SESSION_TIME}` values from this prompt. Do not
+   infer the date from issues, comments, week labels, or existing journal
+   entries.
+
 === PRIORITY ===
 
 - p0-critical: Production broken, data loss, security vulnerability

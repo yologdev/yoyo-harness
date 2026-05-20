@@ -168,8 +168,87 @@ print(text)
 }
 
 # ── Helper: commit and push journal changes ──
+normalize_journal_dates() {
+    [ -f .yoyo/journal.md ] || return 0
+
+    local diff
+    diff=$(git diff --unified=0 -- .yoyo/journal.md 2>/dev/null || true)
+    [ -n "$diff" ] || return 0
+
+    printf "%s" "$diff" | python3 -c '
+import re
+import sys
+
+session_date, session_time, path = sys.argv[1:4]
+diff = sys.stdin.read()
+
+changed_lines = set()
+current_line = None
+
+for line in diff.splitlines():
+    if line.startswith("@@"):
+        m = re.search(r"\+(\d+)(?:,(\d+))?", line)
+        if not m:
+            current_line = None
+            continue
+        current_line = int(m.group(1))
+        continue
+    if current_line is None:
+        continue
+    if line.startswith("+") and not line.startswith("+++"):
+        changed_lines.add(current_line)
+        current_line += 1
+    elif line.startswith("-") and not line.startswith("---"):
+        continue
+    else:
+        current_line += 1
+
+if not changed_lines:
+    sys.exit(0)
+
+with open(path, encoding="utf-8") as f:
+    lines = f.readlines()
+
+changed = False
+heading = re.compile(r"^(## )(\d{4}-\d{2}-\d{2})(?: (\d{2}:\d{2}))?(.*)$")
+
+for line_no in sorted(changed_lines):
+    if line_no < 1 or line_no > len(lines):
+        continue
+    raw_line = lines[line_no - 1]
+    newline = "\n" if raw_line.endswith("\n") else ""
+    line = raw_line[:-1] if newline else raw_line
+    m = heading.match(line)
+    if not m:
+        continue
+    prefix, old_date, old_time, suffix = m.groups()
+    # Only normalize session headings, not arbitrary markdown dates.
+    if not (suffix.startswith(" ") and ("(" in suffix or "—" in suffix)):
+        continue
+    if old_date == session_date and (old_time is None or old_time == session_time):
+        continue
+    if old_time is None:
+        replacement = f"{prefix}{session_date}{suffix}"
+    else:
+        replacement = f"{prefix}{session_date} {session_time}{suffix}"
+    lines[line_no - 1] = replacement + newline
+    changed = True
+    print(
+        f"  Normalized journal heading date on line {line_no}: "
+        f"{old_date}{(' ' + old_time) if old_time else ''} -> "
+        f"{session_date}{(' ' + session_time) if old_time else ''}",
+        file=sys.stderr,
+    )
+
+if changed:
+    with open(path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+' "$DATE" "$SESSION_TIME" ".yoyo/journal.md" || true
+}
+
 commit_and_push_journal() {
     local message="$1"
+    normalize_journal_dates
     git add .yoyo/journal.md 2>/dev/null || true
     if ! git diff --cached --quiet 2>/dev/null; then
         git commit -m "$message"
