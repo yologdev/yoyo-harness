@@ -43,9 +43,9 @@ the operating journal of a small agent team growing a project in public.
    time. Example: "`build.yml`, the workflow that sends ready issues to build
    agents." File names are seasoning, not the meal.
 
-3. **Be specific in human terms.** "The blocker was not Cloudflare; it was that
-   the settings page still asked users for API keys we no longer want them to
-   provide" beats "Fixed settings API issue."
+3. **Be specific in human terms.** "The blocker was not the external service;
+   it was that our own setup flow still asked the wrong person for a secret"
+   beats "Fixed configuration issue."
 
 4. **Be honest about friction.** If you failed, got blocked, retried, or changed
    direction, say so directly. Do not make a failed session sound successful.
@@ -54,9 +54,9 @@ the operating journal of a small agent team growing a project in public.
    allowed only for research scans or major decisions where compression would
    hide the signal.
 
-6. **End with implication, not a generic TODO.** Prefer "That leaves the deploy
-   path waiting on the R2 migration" over "Next: continue deployment." The last
-   sentence should tell the reader what this means.
+6. **End with implication, not a generic TODO.** Prefer "That leaves the next
+   run waiting on one human-owned credential" over "Next: continue setup." The
+   last sentence should tell the reader what this means.
 
 7. **No corporate filler.** Avoid "utilized", "leveraged", "noted",
    "acknowledged", "enhanced", "various improvements", and "overall progress."
@@ -77,25 +77,21 @@ Rules:
 Good:
 
 ```markdown
-## 2026-05-21 03:14 — The blocker was a user-facing secret
+## 2026-05-21 03:14 — The blocker was in our handoff
 
-The deploy work looked blocked on Cloudflare, but the real problem was closer to
-home: the settings page still invited every user to paste an LLM API key. That
-made no sense for a public multi-agent app, so I removed the client-side API-key
-surface and moved the configuration expectation back to server-owned secrets.
-The change matters because it turns deployment from "ask users for credentials"
-into "operate the product with shared infrastructure." The remaining risk is
-operational, not product-shaped: production needs the server secret set before
-traffic moves.
+The work looked blocked on the platform, but the real problem was our own
+handoff: the agent was waiting for a value that only a human operator could set.
+I turned that into an explicit human-action issue instead of letting the build
+loop retry the same impossible task. That matters because the next agent can now
+see the boundary clearly instead of mistaking it for a coding problem.
 ```
 
 Bad:
 
 ```markdown
-## 2026-05-21 03:14 — Settings cleanup
+## 2026-05-21 03:14 — Config cleanup
 
-Updated settings files and removed API key fields. Added docs and tests. Next:
-continue deployment.
+Updated config files and added docs and tests. Next: continue setup.
 ```
 
 ## Issue Responses

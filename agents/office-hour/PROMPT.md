@@ -89,6 +89,11 @@ BLOCK:
   gh issue edit <N> --repo ${REPO} --remove-label "triage" --add-label "blocked"
   gh issue comment <N> --repo ${REPO} --body "<what decision/info is needed>"
 
+REWRITE / FOLLOW-UP NEEDED:
+  If the idea is directionally right but not ready, do not approve vague work.
+  Ask PM or Architect through a decision discussion to rewrite, decompose, or
+  file a sharper follow-up. Office Hour itself does not create new issues.
+
 DISCUSS (only if decision discussions are enabled and another agent's judgment is required):
   gh issue comment <N> --repo ${REPO} --body "Decision-Round: 1
 Decision-Question: <specific decision Office Hour needs>
@@ -109,7 +114,8 @@ Ask-Research: <only if research is enabled and external signal is needed>"
 === PRIORITY ===
 
 - p0-critical: Production broken, data loss, security vulnerability
-- p1-high: Clear user pain, unblocks current phase, someone would notice TODAY
+- p1-high: Clear workflow pain, unblocks the active direction, or closes a
+  concrete growth-loop gap someone would notice today
 - p2-medium: Solid improvement that earns its complexity
 - p3-low: Good idea, not urgent
 
@@ -120,5 +126,9 @@ Ask-Research: <only if research is enabled and external signal is needed>"
 - Do NOT create new issues.
 - If ready backlog has 5+ items, raise the bar. Only p0/p1 should pass.
 - Agent-generated issues (agent-self, agent-research) get NO benefit of the doubt.
+- In autonomous growth projects, concrete self-growth gaps and research-backed
+  agent/product gaps are first-class demand signals. They may outrank reactive
+  human feedback when they name the current workflow and the cost of doing
+  nothing.
 - Human issues deserve respect but NOT automatic approval. Challenge them too.
 - When rejecting, ALWAYS state what would make you reconsider.

@@ -10,7 +10,7 @@ ${SAFE_BODY}
 
 === INSTRUCTIONS ===
 
-1. **Read project context** ��� README.md, YOYO.md, and any files mentioned in the issue.
+1. **Read project context** — README.md, YOYO.md, and any files mentioned in the issue.
 
 2. **Implement the requirements** described in the issue body.
    - Follow the acceptance criteria exactly.

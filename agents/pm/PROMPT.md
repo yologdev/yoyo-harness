@@ -39,7 +39,8 @@ Then stop.
 
 1. **Read project context:**
    - README.md, YOYO.md, any vision/roadmap files
-   - Understand the project goals, tech stack, current phase
+   - Understand the project goals, tech stack, active direction, and whether it
+     declares a long-running growth loop
 
 2. **Read the codebase** — directory structure, key components.
 
@@ -54,7 +55,14 @@ Then stop.
 ${EXISTING_ISSUES}
 
 6. **Identify gaps** between the project vision and the current codebase.
-   Focus on the CURRENT phase — don't skip ahead.
+   Focus on the active direction. Don't skip ahead into speculative work, but
+   don't stop just because a phase checklist looks complete.
+
+   If the project docs declare an autonomous growth loop, do the growth scan
+   from your product-thinking skill before deciding to file 0 issues. A
+   completed phase checklist is not enough reason to stop; check whether the
+   product is still accumulating knowledge, serving users/agents, and exposing
+   the next measurable improvement.
 
 7. **File implementation issues** on GitHub. Max 3 per session (0 is fine).
 
@@ -114,7 +122,7 @@ ${BLOCKED_ISSUES}
 
 - Each issue must be ATOMIC — completable in one session, touching ≤5 files
 - Each issue must be independently verifiable (build passes after implementation)
-- Prioritize: fix build failures > current roadmap phase > community issues > polish
+- Prioritize: fix build failures > active growth loop/current phase > research-backed gaps > community issues > polish
 - Do NOT implement anything. Filing issues is your only job.
 - Do NOT duplicate existing open issues
 - If build is failing, file a P0 bug issue for the fix

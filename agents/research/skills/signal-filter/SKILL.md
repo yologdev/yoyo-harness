@@ -6,8 +6,10 @@ tools: [bash]
 
 # Signal Filter: Intelligence Standards
 
-Most weeks, the right number of issues to file is 0. A scan that finds nothing
-actionable is not a failed scan — it means the project is on track.
+Most weeks, the right number of issues to file may be 0. A scan that finds
+nothing actionable is not a failed scan, but a scan that leaves no reusable
+learning is wasted. Your job is to improve the team's map of the world even
+when you do not create work.
 
 ## Three Layers of Knowledge
 
@@ -45,6 +47,20 @@ Before reporting ANY finding:
 
 If a finding doesn't pass all three, it's noise. Don't report it.
 
+## Signal Map
+
+Every scan should leave a compact map:
+
+- **Changed:** external evidence that should alter strategy, architecture,
+  product direction, or the autonomous growth loop.
+- **Unchanged:** notable findings you rejected, with the reason they do not
+  matter now.
+- **Watch next:** named signals to check later, not vague "keep an eye on X".
+- **Trigger:** the evidence that would make a watched item actionable.
+
+This lets future PM and Research sessions compound instead of rediscovering the
+same landscape from scratch.
+
 ## What Counts as Signal
 
 - A competitor shipped something that makes our approach obsolete
@@ -52,6 +68,10 @@ If a finding doesn't pass all three, it's noise. Don't report it.
 - A well-known project failed at something we're about to try (and why)
 - Evidence of user demand for something we haven't prioritized
 - A fundamental assumption in our architecture that's been proven wrong elsewhere
+- A self-growth gap: the agent loop is worse than adjacent tools at planning,
+  building, reviewing, remembering, researching, or recovering from failure
+- A knowledge-compounding gap: new information is not entering, being
+  synthesized, staying healthy, or becoming reusable
 
 ## What Counts as Noise
 
@@ -60,7 +80,7 @@ If a finding doesn't pass all three, it's noise. Don't report it.
 - Feature lists of similar products (we're not building their product)
 - Blog posts about best practices we already follow
 - Tangentially related projects (not competitive)
-- "Could be useful someday" (file 0 issues for someday)
+- "Could be useful someday" without a named watch signal and trigger
 
 ## Filing Issues from Research
 
@@ -70,6 +90,10 @@ Only file when ALL are true:
 - The change is motivated by evidence (cite the source)
 - The office-hour agent would pass it (apply the taste framework yourself first)
 
+For autonomous growth projects, research-backed self-growth gaps are high
+priority. They do not need to wait for reactive feedback when the affected
+workflow is specific, current, and important to the agent loop.
+
 When filing, be honest about confidence:
 - "High confidence: competitor X proved approach Y fails because Z"
 - "Medium confidence: technique X might simplify our code, worth investigating"
@@ -77,12 +101,15 @@ When filing, be honest about confidence:
 
 ## Journal Entry Quality
 
-Show, don't tell:
+Show, don't tell. Use the signal map:
 
-- GOOD: "Scanned LLM wiki space. Obsidian plugins now support collaborative editing via CRDTs (plugin X, 12k installs). Irrelevant to us — we're server-rendered. No action."
-- BAD: "Conducted comprehensive research into the wiki and knowledge management space."
+- GOOD: "Changed: adjacent coding agents now preserve task memory across runs;
+  our build loop still rediscovers failure context from comments. Filing one
+  issue to pass the last failure summary into rescue mode."
+- GOOD: "Unchanged: three new knowledge-base tools launched, but all assume a
+  human curator. Watch next: whether any exposes an agent-write API; trigger:
+  one ships source attribution plus agent edits."
+- BAD: "Conducted comprehensive research into the knowledge management space."
 
-- GOOD: "Found: Notebookllm uses chunked embeddings with 128-token overlap for better retrieval. Our current approach has no overlap. Filing issue."
-- BAD: "Discovered several interesting approaches to embeddings that could be valuable."
-
-4 sentences max. What you searched, what you found, what it means, what to do.
+Keep it tight. What you searched, what changed, what did not, what to watch,
+and what issue you filed if any.
