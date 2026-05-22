@@ -47,15 +47,17 @@ Before reporting ANY finding:
 
 If a finding doesn't pass all three, it's noise. Don't report it.
 
-## Signal Map
+## Advantage Brief
 
-Every scan should leave a compact map:
+Every scan should leave a compact advantage brief:
 
-- **Changed:** external evidence that should alter strategy, architecture,
-  product direction, or the autonomous growth loop.
-- **Unchanged:** notable findings you rejected, with the reason they do not
-  matter now.
-- **Watch next:** named signals to check later, not vague "keep an eye on X".
+- **Market movement:** what changed in user behavior, product direction,
+  technical practice, distribution, or ecosystem assumptions.
+- **Evidence:** the concrete source, release, failure, launch, discussion, or
+  repeated pattern that makes the movement real.
+- **Project relevance:** why this matters for THIS project now.
+- **Recommended move:** the smallest simple-but-effective change, if any.
+- **Decision:** adopt now, watch, or ignore.
 - **Trigger:** the evidence that would make a watched item actionable.
 
 This lets future PM and Research sessions compound instead of rediscovering the
@@ -64,20 +66,31 @@ same landscape from scratch.
 ## What Counts as Signal
 
 - A competitor shipped something that makes our approach obsolete
+- A competitor, adjacent tool, or community behavior reveals a new workflow we
+  should support or deliberately reject
 - A technique that would replace 500 lines of our code with 5
 - A well-known project failed at something we're about to try (and why)
 - Evidence of user demand for something we haven't prioritized
+- A protocol, platform, model, or distribution shift that changes the best next
+  move
 - A fundamental assumption in our architecture that's been proven wrong elsewhere
 - A self-growth gap: the agent loop is worse than adjacent tools at planning,
   building, reviewing, remembering, researching, or recovering from failure
 - A knowledge-compounding gap: new information is not entering, being
   synthesized, staying healthy, or becoming reusable
+- A simple move that would compound product advantage faster than copying a
+  larger feature set
 
 ## What Counts as Noise
 
 - "X project exists" (so what?)
 - "Y technique is interesting" (actionable how?)
 - Feature lists of similar products (we're not building their product)
+- Long competitor comparisons that do not change a decision
+- "They have X, we do not" unless X reveals demand, a useful pattern, or a
+  concrete gap in this project
+- Stars, funding, launches, or hype without a behavior change or strategic
+  implication
 - Blog posts about best practices we already follow
 - Tangentially related projects (not competitive)
 - "Could be useful someday" without a named watch signal and trigger
@@ -89,6 +102,7 @@ Only file when ALL are true:
 - You can describe the change in specific terms (not "investigate X")
 - The change is motivated by evidence (cite the source)
 - The office-hour agent would pass it (apply the taste framework yourself first)
+- The issue represents an advantage move, not a copied competitor feature
 
 For autonomous growth projects, research-backed self-growth gaps are high
 priority. They do not need to wait for reactive feedback when the affected
@@ -101,7 +115,7 @@ When filing, be honest about confidence:
 
 ## Journal Entry Quality
 
-Show, don't tell. Use the signal map:
+Show, don't tell. Use the advantage brief:
 
 - GOOD: "Changed: adjacent coding agents now preserve task memory across runs;
   our build loop still rediscovers failure context from comments. Filing one
@@ -109,7 +123,12 @@ Show, don't tell. Use the signal map:
 - GOOD: "Unchanged: three new knowledge-base tools launched, but all assume a
   human curator. Watch next: whether any exposes an agent-write API; trigger:
   one ships source attribution plus agent edits."
+- GOOD: "Market movement: teams are moving from private agent memory to
+  auditable shared memory. Relevance: this strengthens yopedia's public-commons
+  bet. Decision: adopt now by making provenance easier to inspect, not by
+  copying their graph UI."
 - BAD: "Conducted comprehensive research into the knowledge management space."
+- BAD: "Project A has feature X, Project B has feature Y, and we have neither."
 
 Keep it tight. What you searched, what changed, what did not, what to watch,
 and what issue you filed if any.
