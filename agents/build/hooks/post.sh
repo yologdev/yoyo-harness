@@ -186,12 +186,19 @@ git checkout main
 git pull --rebase origin main 2>/dev/null || true
 
 if [ -f .yoyo/journal.md ]; then
+    COMMITS_INLINE=$(printf "%s" "$COMMITS" | sed ':a;N;$!ba;s/\n/; /g')
     {
         echo ""
-        echo "## $DATE $SESSION_TIME (build)"
-        echo "Implemented issue #$ISSUE_NUMBER: $ISSUE_TITLE"
-        echo "Branch: $BRANCH | PR: $PR_URL"
-        echo "Commits: $COMMITS"
+        echo "## $DATE $SESSION_TIME — Build opened issue #$ISSUE_NUMBER"
+        echo ""
+        echo "The build agent turned \"$ISSUE_TITLE\" into code on \`$BRANCH\` after running the configured build, lint, and test checks."
+        if [[ "$PR_URL" == http* ]]; then
+            echo "The result is ready for review at $PR_URL."
+        else
+            echo "The branch was pushed, but PR creation did not complete: $PR_URL."
+        fi
+        echo "The commit trail is: $COMMITS_INLINE."
+        echo "That leaves the work waiting on review and merge rather than another build pass."
     } >> .yoyo/journal.md
     commit_and_push_journal "yoyo: build session ($DATE) — issue #$ISSUE_NUMBER"
 fi
