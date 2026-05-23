@@ -1,6 +1,8 @@
 #!/bin/bash
 # research pre-hook: set focus line from args.
-# Exports: FOCUS_LINE
+# Exports: FOCUS_LINE, RESEARCH_START_SHA
+
+export RESEARCH_START_SHA=$(git rev-parse HEAD)
 
 parse_decision_args "${AGENT_ARGS:-}"
 if [ "$DECISION_MODE" = "true" ]; then

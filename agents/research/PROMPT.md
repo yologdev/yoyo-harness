@@ -99,5 +99,7 @@ Then stop.
 - 0 issues is acceptable; 0 learning is not
 - The run is incomplete until .yoyo/journal.md contains the research entry for
   this session
+- Do NOT commit or push journal changes yourself. The runner post-hook handles
+  the journal commit and push.
 - In autonomous growth projects, self-growth gaps and research-backed capability gaps rank above reactive human feedback when the evidence is concrete
 - Do NOT implement anything
