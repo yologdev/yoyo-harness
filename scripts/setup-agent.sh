@@ -31,6 +31,8 @@ BOT_LOGIN="${BOT_LOGIN:-yoyo[bot]}"
 BOT_SLUG="${BOT_SLUG:-yoyo}"
 DATE=$(date -u +%Y-%m-%d)
 SESSION_TIME=$(date -u +%H:%M)
+JOURNAL_BASE_SHA=$(git rev-parse HEAD 2>/dev/null || echo "")
+export JOURNAL_BASE_SHA
 
 # Security nonce for content boundary markers
 BOUNDARY_NONCE=$(python3 -c "import os; print(os.urandom(16).hex())") || {
@@ -172,7 +174,11 @@ normalize_journal_dates() {
     [ -f .yoyo/journal.md ] || return 0
 
     local diff
-    diff=$(git diff --unified=0 -- .yoyo/journal.md 2>/dev/null || true)
+    if [ -n "${JOURNAL_BASE_SHA:-}" ]; then
+        diff=$(git diff --unified=0 "$JOURNAL_BASE_SHA" -- .yoyo/journal.md 2>/dev/null || true)
+    else
+        diff=$(git diff --unified=0 -- .yoyo/journal.md 2>/dev/null || true)
+    fi
     [ -n "$diff" ] || return 0
 
     printf "%s" "$diff" | python3 -c '

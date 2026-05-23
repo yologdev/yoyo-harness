@@ -18,6 +18,6 @@ if [ "$JOURNAL_DIRTY" = "false" ] && [ "$JOURNAL_COMMITTED" = "false" ]; then
     exit 1
 fi
 
-if [ "$JOURNAL_DIRTY" = "true" ]; then
+if [ "$JOURNAL_DIRTY" = "true" ] || [ "$JOURNAL_COMMITTED" = "true" ]; then
     commit_and_push_journal "yoyo: weekly research scan ($DATE)"
 fi
