@@ -15,6 +15,8 @@ fi
 if [ "$JOURNAL_DIRTY" = "false" ] && [ "$JOURNAL_COMMITTED" = "false" ]; then
     echo "ERROR: Research completed without updating .yoyo/journal.md."
     echo "A research run must leave an advantage brief even when it files 0 issues."
+    echo "The research agent must write the journal entry before exiting."
+    echo "The post-hook only validates, commits, and pushes the entry; it does not author it."
     exit 1
 fi
 

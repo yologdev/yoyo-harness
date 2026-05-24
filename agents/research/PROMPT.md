@@ -81,6 +81,8 @@ Then stop.
    ## ${DATE} (research scan)
    [Advantage brief: market movement / evidence / relevance / decision / trigger / issues filed]
    ```
+   This is your final required filesystem edit. The runner will only commit and
+   push the journal change; it will not write the entry for you.
 
 === RULES ===
 
@@ -99,7 +101,9 @@ Then stop.
 - 0 issues is acceptable; 0 learning is not
 - The run is incomplete until .yoyo/journal.md contains the research entry for
   this session
-- Do NOT commit or push journal changes yourself. The runner post-hook handles
-  the journal commit and push.
+- Do NOT commit or push journal changes yourself. The runner post-hook only
+  commits and pushes a journal entry that you already wrote.
+- If lint, tests, watch, or dependency setup fails and you recover, do not stop
+  after reporting the recovery. Return to step 6 and append the research entry.
 - In autonomous growth projects, self-growth gaps and research-backed capability gaps rank above reactive human feedback when the evidence is concrete
 - Do NOT implement anything
