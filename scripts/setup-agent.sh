@@ -217,6 +217,7 @@ with open(path, encoding="utf-8") as f:
 
 changed = False
 heading = re.compile(r"^(## )(\d{4}-\d{2}-\d{2})(?: (\d{2}:\d{2}))?(.*)$")
+agent_only_heading = re.compile(r"^(## )\s*(\([^)]+\))(.*)$")
 
 for line_no in sorted(changed_lines):
     if line_no < 1 or line_no > len(lines):
@@ -226,6 +227,17 @@ for line_no in sorted(changed_lines):
     line = raw_line[:-1] if newline else raw_line
     m = heading.match(line)
     if not m:
+        agent_only = agent_only_heading.match(line)
+        if agent_only:
+            prefix, agent_suffix, suffix = agent_only.groups()
+            replacement = f"{prefix}{session_date} {session_time} {agent_suffix}{suffix}"
+            lines[line_no - 1] = replacement + newline
+            changed = True
+            print(
+                f"  Added journal heading date on line {line_no}: "
+                f"{line} -> {replacement}",
+                file=sys.stderr,
+            )
         continue
     prefix, old_date, old_time, suffix = m.groups()
     # Only normalize session headings, not arbitrary markdown dates.
@@ -249,7 +261,7 @@ for line_no in sorted(changed_lines):
 if changed:
     with open(path, "w", encoding="utf-8") as f:
         f.writelines(lines)
-' "$DATE" "$SESSION_TIME" ".yoyo/journal.md" || true
+' "$DATE" "$SESSION_TIME" ".yoyo/journal.md"
 }
 
 commit_and_push_journal() {
