@@ -181,12 +181,18 @@ normalize_journal_dates() {
     fi
     [ -n "$diff" ] || return 0
 
-    printf "%s" "$diff" | python3 -c '
+    local diff_file
+    diff_file=$(mktemp)
+    printf "%s" "$diff" > "$diff_file"
+
+    local py_status=0
+    python3 - "$DATE" "$SESSION_TIME" ".yoyo/journal.md" "$diff_file" <<'PY' || py_status=$?
 import re
 import sys
 
-session_date, session_time, path = sys.argv[1:4]
-diff = sys.stdin.read()
+session_date, session_time, path, diff_path = sys.argv[1:5]
+with open(diff_path, encoding="utf-8") as f:
+    diff = f.read()
 
 changed_lines = set()
 current_line = None
@@ -261,7 +267,9 @@ for line_no in sorted(changed_lines):
 if changed:
     with open(path, "w", encoding="utf-8") as f:
         f.writelines(lines)
-' "$DATE" "$SESSION_TIME" ".yoyo/journal.md"
+PY
+    rm -f "$diff_file"
+    return "$py_status"
 }
 
 commit_and_push_journal() {
