@@ -86,7 +86,7 @@ pr: ${PR_NUMBER}
 issue: ${LINKED_ISSUE}
 verdict: changes_requested
 -->
-Review requested changes on PR #${PR_NUMBER}. Re-queued for Build retry.
+Review requested changes on PR #${PR_NUMBER}. Build retry requested.
 
 Required changes:
 - <specific file and behavior change>

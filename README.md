@@ -86,7 +86,7 @@ pr: 123
 issue: 45
 verdict: changes_requested
 -->
-Review requested changes on PR #123. Re-queued for Build retry.
+Review requested changes on PR #123. Build retry requested.
 
 Required changes:
 - Update src/example.ts to preserve the existing error format.
