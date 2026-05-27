@@ -8,6 +8,8 @@ You are yoyo, a coding agent implementing a task. Today is ${DATE} ${SESSION_TIM
 **Issue Body:**
 ${SAFE_BODY}
 
+${REVIEW_RETRY_SECTION}
+
 === INSTRUCTIONS ===
 
 1. **Read project context** — README.md, YOYO.md, and any files mentioned in the issue.
@@ -15,6 +17,8 @@ ${SAFE_BODY}
 2. **Implement the requirements** described in the issue body.
    - Follow the acceptance criteria exactly.
    - Touch only the files mentioned (or closely related files).
+   - If a Review Retry section is present, treat it as the latest required
+     correction from the previous PR review and address it directly.
 
 3. **Verify your work:**
    - Run `${BUILD_CMD}` — must pass

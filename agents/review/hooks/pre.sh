@@ -78,9 +78,18 @@ export REQUEUE_SECTION=""
 if [ -n "$LINKED_ISSUE" ]; then
     LINKED_ISSUE_SECTION="**Linked Issue #${LINKED_ISSUE}:**
 ${ISSUE_BODY}"
-    REQUEUE_SECTION="Then re-queue the linked issue:
+    REQUEUE_SECTION="Then re-queue the linked issue with machine-readable retry context:
 \`\`\`
 gh issue edit ${LINKED_ISSUE} --repo ${REPO} --remove-label \"in-progress\" --add-label \"ready\"
-gh issue comment ${LINKED_ISSUE} --repo ${REPO} --body \"PR #${PR_NUMBER} review requested changes. Re-queued for retry.\"
+gh issue comment ${LINKED_ISSUE} --repo ${REPO} --body \"<!-- yoyo-review-retry
+pr: ${PR_NUMBER}
+issue: ${LINKED_ISSUE}
+verdict: changes_requested
+-->
+Review requested changes on PR #${PR_NUMBER}. Re-queued for Build retry.
+
+Required changes:
+- <specific file and behavior change>
+- <specific test or verification update>\"
 \`\`\`"
 fi

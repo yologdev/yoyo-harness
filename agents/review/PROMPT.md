@@ -52,6 +52,9 @@ gh pr review ${PR_NUMBER} --repo ${REPO} --request-changes --body "<specific fee
 ```
 ${REQUEUE_SECTION}
 
+Your feedback must be precise enough for the Build agent to execute on the next
+attempt. Include file names, exact behavior to change, and expected test updates.
+
 **If MERGE CONFLICT detected:**
 First try to resolve:
 ```
@@ -60,9 +63,14 @@ git push --force-with-lease
 ```
 If rebase fails, comment on the PR explaining the conflict.
 
-After approving, if the PR has no merge conflicts and build passes:
+After approving, if the PR has no merge conflicts and build passes, merge it:
 ```
-gh pr merge ${PR_NUMBER} --repo ${REPO} --squash --auto
+gh pr merge ${PR_NUMBER} --repo ${REPO} --squash --delete-branch
+```
+If GitHub reports that required checks are still pending, enable auto-merge
+instead:
+```
+gh pr merge ${PR_NUMBER} --repo ${REPO} --squash --auto --delete-branch
 ```
 
 === RULES ===
@@ -71,3 +79,6 @@ gh pr merge ${PR_NUMBER} --repo ${REPO} --squash --auto
 - Don't nitpick style if it matches existing patterns.
 - If the PR modifies protected files, always request changes — no exceptions.
 - Only approve if you're confident the change is correct and complete.
+- If requesting changes on a linked issue, you MUST re-queue the linked issue
+  with the structured `yoyo-review-retry` block shown above. The next Build
+  agent run consumes that block as required correction context.

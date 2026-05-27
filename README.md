@@ -69,6 +69,40 @@ agents for judgment in issue comments using `Ask-PM:`, `Ask-Architect:`, and
 `Ask-Research:` markers. Those agents reply with `Decision-Input:` comments, and
 Office Hour makes the final readiness verdict after at most `max_rounds`.
 
+## PR Repair Loop
+
+The Build and Review agents form a generic repair loop for yoyo-authored PRs:
+
+1. Build claims a `ready` issue, opens or updates `yoyo/issue-N`, and creates a
+   PR with `Closes #N`.
+2. Review checks the PR against the linked issue, build result, and protected
+   paths.
+3. If Review requests changes, it re-queues the linked issue and comments with a
+   machine-readable retry block:
+
+```md
+<!-- yoyo-review-retry
+pr: 123
+issue: 45
+verdict: changes_requested
+-->
+Review requested changes on PR #123. Re-queued for Build retry.
+
+Required changes:
+- Update src/example.ts to preserve the existing error format.
+- Update tests to assert the existing format.
+```
+
+4. The next Build run injects the latest `yoyo-review-retry` comment into its
+   prompt and treats it as required correction context.
+5. Build pushes back to the existing `yoyo/issue-N` branch when a PR already
+   exists, causing Review to run again on the updated PR.
+6. If Review passes and checks are mergeable, Review merges the PR.
+
+This loop is intentionally issue/PR based rather than project-specific. Any
+repository using yoyo-harness can reuse it as long as Build PRs include
+`Closes #N` and Review can comment on the linked issue.
+
 ## License
 
 MIT

@@ -159,11 +159,17 @@ fi
 COMMITS=$(git log --oneline "$SESSION_START_SHA"..HEAD --format="- %s" || true)
 
 PR_EXIT=0
-PR_URL=$(gh pr create --repo "$REPO" \
-    --base main \
+PR_URL=$(gh pr list --repo "$REPO" \
     --head "$BRANCH" \
-    --title "yoyo: $ISSUE_TITLE" \
-    --body "Closes #$ISSUE_NUMBER
+    --state open \
+    --json url --jq '.[0].url // ""' 2>/dev/null || true)
+
+if [ -z "$PR_URL" ]; then
+    PR_URL=$(gh pr create --repo "$REPO" \
+        --base main \
+        --head "$BRANCH" \
+        --title "yoyo: $ISSUE_TITLE" \
+        --body "Closes #$ISSUE_NUMBER
 
 ## Changes
 $COMMITS
@@ -172,6 +178,9 @@ $COMMITS
 - [ ] \`$BUILD_CMD\` passes
 - [ ] \`$LINT_CMD\` passes
 - [ ] \`$TEST_CMD\` passes" 2>&1) || PR_EXIT=$?
+else
+    echo "  Existing PR found for $BRANCH: $PR_URL"
+fi
 
 if [ "$PR_EXIT" -ne 0 ]; then
     echo "  WARNING: PR creation failed (exit $PR_EXIT): $PR_URL"

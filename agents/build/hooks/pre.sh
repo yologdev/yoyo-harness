@@ -70,3 +70,17 @@ export SESSION_START_SHA=$(git rev-parse HEAD)
 
 # ── Sanitize issue body ──
 export SAFE_BODY=$(echo "$ISSUE_BODY" | sanitize_issue_content)
+
+# ── Include latest structured review retry, if any ──
+REVIEW_RETRY_BODY=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments \
+    --jq '[.comments[] | select(.body | contains("<!-- yoyo-review-retry"))][-1].body // ""' 2>/dev/null || true)
+export REVIEW_RETRY_SECTION=""
+if [ -n "$REVIEW_RETRY_BODY" ]; then
+    SAFE_RETRY=$(printf "%s" "$REVIEW_RETRY_BODY" | sanitize_issue_content | head -c 4000)
+    REVIEW_RETRY_SECTION="=== REVIEW RETRY ===
+
+The previous PR review requested changes. Address this feedback before opening
+another PR:
+
+${SAFE_RETRY}"
+fi
