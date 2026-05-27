@@ -32,8 +32,47 @@ fi
 
 # ── Check retry count (stop spinning on hard issues) ──
 MAX_ISSUE_RETRIES=3
-RETRY_COUNT=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments \
-    --jq '[.comments[] | select(.body | test("Re-queued|Build failed|Implementation attempted|made no changes|failed to push"; "i"))] | length' 2>/dev/null || echo 0)
+ISSUE_COMMENTS_JSON=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments 2>/dev/null || echo '{"comments":[]}')
+REVIEW_RETRY_BODY=$(printf "%s" "$ISSUE_COMMENTS_JSON" | python3 -c '
+import json
+import sys
+
+try:
+    comments = json.load(sys.stdin).get("comments", [])
+except Exception:
+    comments = []
+
+for comment in reversed(comments):
+    body = comment.get("body") or ""
+    if "<!-- yoyo-review-retry" in body:
+        print(body)
+        break
+' 2>/dev/null || true)
+RETRY_COUNT=$(printf "%s" "$ISSUE_COMMENTS_JSON" | python3 -c '
+import json
+import re
+import sys
+
+try:
+    comments = json.load(sys.stdin).get("comments", [])
+except Exception:
+    comments = []
+
+last_retry = -1
+for index, comment in enumerate(comments):
+    if "<!-- yoyo-review-retry" in (comment.get("body") or ""):
+        last_retry = index
+
+failure = re.compile(r"Re-queued|Build failed|Implementation attempted|made no changes|failed to push", re.I)
+count = 0
+for index, comment in enumerate(comments):
+    if index <= last_retry:
+        continue
+    body = comment.get("body") or ""
+    if failure.search(body):
+        count += 1
+print(count)
+' 2>/dev/null || echo 0)
 
 if [ "$RETRY_COUNT" -ge "$MAX_ISSUE_RETRIES" ]; then
     echo "  Issue #$ISSUE_NUMBER has failed $RETRY_COUNT times. Escalating."
@@ -72,8 +111,6 @@ export SESSION_START_SHA=$(git rev-parse HEAD)
 export SAFE_BODY=$(echo "$ISSUE_BODY" | sanitize_issue_content)
 
 # ── Include latest structured review retry, if any ──
-REVIEW_RETRY_BODY=$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments \
-    --jq '[.comments[] | select(.body | contains("<!-- yoyo-review-retry"))][-1].body // ""' 2>/dev/null || true)
 export REVIEW_RETRY_SECTION=""
 if [ -n "$REVIEW_RETRY_BODY" ]; then
     SAFE_RETRY=$(printf "%s" "$REVIEW_RETRY_BODY" | sanitize_issue_content | head -c 4000)
