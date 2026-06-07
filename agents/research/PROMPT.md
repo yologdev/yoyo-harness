@@ -63,26 +63,35 @@ Then stop.
    - Does this change strategy, architecture, product direction, distribution,
      or the growth loop? If not, skip it.
 
-4. **Write the advantage brief** before filing issues:
+4. **Write the advantage brief — straight into `.yoyo/journal.md`.** This is your
+   primary deliverable, not a trailing chore. Author it in the journal AS YOU
+   analyze, before filing issues, so the run's output exists first. Append:
+   ```
+   ## ${DATE} (research scan)
    - Market movement: what changed
    - Evidence: concrete source, behavior, release, failure, or trend
-   - Yopedia/project relevance: why it matters here
+   - Relevance: why it matters for this project
    - Recommended move: smallest useful action, if any
    - Decision: adopt now / watch / ignore
    - Trigger: evidence that would turn a watched item into an issue
+   - Issues filed: <numbers, or "none">
+   ```
+   Write only — do NOT commit or push it; the runner post-hook does that.
 
-5. **File issues** for concrete changes (max 3, 0 is fine):
+5. **File issues** for concrete changes (max 3, 0 is fine), then record their
+   numbers in the journal entry you wrote in step 4:
    ```
    gh issue create --repo ${REPO} --title "Research: ..." --body "..." --label "agent-research" --label "triage"
    ```
 
-6. **Append a research entry** to .yoyo/journal.md:
+6. **Final check — MANDATORY, do this before you stop.** Verify your brief
+   actually landed in the journal:
    ```
-   ## ${DATE} (research scan)
-   [Advantage brief: market movement / evidence / relevance / decision / trigger / issues filed]
+   grep -q "## ${DATE}" .yoyo/journal.md && echo "journal OK" || echo "MISSING — write it now"
    ```
-   This is your final required filesystem edit. The runner will only commit and
-   push the journal change; it will not write the entry for you.
+   If this prints "MISSING", append the step-4 entry immediately and re-run the
+   check. The run is NOT complete — and you may NOT stop — until it prints
+   "journal OK".
 
 === RULES ===
 
@@ -104,6 +113,7 @@ Then stop.
 - Do NOT commit or push journal changes yourself. The runner post-hook only
   commits and pushes a journal entry that you already wrote.
 - If lint, tests, watch, or dependency setup fails and you recover, do not stop
-  after reporting the recovery. Return to step 6 and append the research entry.
+  after reporting the recovery. Return to step 4, write the journal entry, and
+  run the step-6 check before stopping.
 - In autonomous growth projects, self-growth gaps and research-backed capability gaps rank above reactive human feedback when the evidence is concrete
 - Do NOT implement anything
